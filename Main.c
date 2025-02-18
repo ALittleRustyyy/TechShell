@@ -1,5 +1,5 @@
 //Devin Walton
-//Desc: Program 03 - This program takes in user input and then separates it into different words(tokens) before returning them to the user
+//Desc: This program takes in user input and then separates it into different words(tokens) before returning them to the user
 //01/28/2025
 
 #include <stdio.h>
@@ -10,6 +10,7 @@
 
 // Function Prototypes
 void tokenize(char *str); //depricated
+void ExecuteCommand(char *commandArgs[]);
 
 int main() {
     while(1){
@@ -53,4 +54,22 @@ int main() {
         printf("%d token(s) read\n\n", count);
     }
     return 0;
+}
+
+void ExecuteCommand(char *commandArgs[]){ 
+    pid_t pid = fork();  // Create a new process
+
+    if (pid < 0) {
+        // Fork failed
+        perror("Fork failed");  // Print error message
+        exit(1);  // Exit with error code
+    } else if (pid == 0) { // Child process
+        if(execvp(commandArgs[0], commandArgs) == -1) {  // Replace child process with new program
+            perror("Execution failed");  // Print error message if execvp fails
+            exit(1);  // Exit with error code
+        }
+    } else { // Parent process
+        // Parent process waits for child to complete
+        waitpid(pid, NULL, 0);  // Wait for child process to finish
+    }
 }
