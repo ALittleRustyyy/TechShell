@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <errno.h>
 // #include "CommandPrompt.h" // Include the header file for CommandPrompt - taken out and added to the bottom of the file
 
 //Definitions
@@ -55,7 +56,7 @@ void execute_command(char *command) {
     char *input_file = NULL;
     char *output_file = NULL;
 
-
+    // Tokenize the input command
     token = strtok(command, " ");
     while (token != NULL && i < MAX_ARGS - 1) {
         if (strcmp(token, "<") == 0) { // Input redirection
@@ -73,43 +74,51 @@ void execute_command(char *command) {
     }
     args[i] = NULL;
 
-    if (args[0] == NULL) { //if the user doesn't enter a command, the program will return   
+    if (args[0] == NULL) { // No command entered
         return;
     }
 
-    pid_t pid = fork(); //fork() creates a new process by duplicating the calling process. The new process is the child, and the calling process is the parent process.
-    if (pid == -1) { //if fork() fails, the program will print an error message and exit
+    pid_t pid = fork();
+    if (pid == -1) {
         perror("fork failed");
         exit(EXIT_FAILURE);
     } else if (pid == 0) { // Child process
         // Handle input redirection
-        if (input_file) { //if the user enters a file to read from, the program will open the file and read from it 
+        if (input_file) {
             int fd = open(input_file, O_RDONLY);
             if (fd == -1) {
                 perror("Error opening input file");
                 exit(EXIT_FAILURE);
             }
-            dup2(fd, STDIN_FILENO); //dup2() duplicates an open file descriptor. In this case, it duplicates the file descriptor for the input file
+            dup2(fd, STDIN_FILENO);
             close(fd);
         }
 
         // Handle output redirection
         if (output_file) {
-            int fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644); //open() opens a file and returns a file descriptor
+            int fd = open(output_file, O_WRONLY | O_CREAT | O_TRUNC, 0644);
             if (fd == -1) {
                 perror("Error opening output file");
                 exit(EXIT_FAILURE);
             }
             dup2(fd, STDOUT_FILENO);
-            close(fd); //close() closes the file descriptor 
+            close(fd);
         }
 
-        if (execvp(args[0], args) == -1) {
-            perror("execvp failed");
-            exit(EXIT_FAILURE);
+        // Execute the command
+        execvp(args[0], args);
+
+        // Error handling for failed execution
+        if (errno == ENOENT) {
+            fprintf(stderr, "Error: Command '%s' not found.\n", args[0]);
+        } else if (errno == EACCES) {
+            fprintf(stderr, "Error: Permission denied for '%s'.\n", args[0]);
+        } else {
+            fprintf(stderr, "Error: Failed to execute '%s': %s\n", args[0], strerror(errno));
         }
+        exit(EXIT_FAILURE);
     } else { // Parent process
-        if (!background) { //if the user doesn't enter an &, the program will wait for the child process to finish
+        if (!background) {
             waitpid(pid, NULL, 0); // Wait if not running in background
         } else {
             printf("Process running in background (PID: %d)\n", pid);
@@ -118,10 +127,28 @@ void execute_command(char *command) {
 }
 
 void change_directory(char *path) {
-    if (chdir(path) != 0) {
-        perror("chdir failed");
+    static char prev_dir[PATH_MAX] = ""; // Store previous directory
+    char curr_dir[PATH_MAX];
+
+    if (path == NULL || strcmp(path, "~") == 0) { // No argument or '~' -> go to home
+        path = getenv("HOME");
+    } else if (strcmp(path, "-") == 0) { // 'cd -' -> go to previous directory
+        if (prev_dir[0] == '\0') {
+            printf("cd: No previous directory set\n");
+            return;
+        }
+        path = prev_dir;
+    }
+
+    if (getcwd(curr_dir, sizeof(curr_dir)) != NULL) { // Save current directory before changing
+        strncpy(prev_dir, curr_dir, PATH_MAX);
+    }
+
+    if (chdir(path) != 0) { // Change directory and handle errors
+        perror("cd failed");
     }
 }
+
 
 void print_working_directory() {
     char cwd[PATH_MAX];
