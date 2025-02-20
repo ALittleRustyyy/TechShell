@@ -48,7 +48,8 @@ int main() {
     return 0;
 }
 
-void execute_command(char *command) {
+void execute_command(char *command) { //Devin, parsing  implementation is done in here as well instead of it being in its own method.
+                                    //this means i dont have a specific method for parsing, but the parsing is still done, just in the execute_command method.
     char *args[MAX_ARGS];
     char *token;
     int i = 0;

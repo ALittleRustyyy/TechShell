@@ -1,0 +1,10 @@
+total 48K
+-rw-rw-r-- 1 austinlucasss austinlucasss  872 Feb 18 18:42 CommandPrompt.c
+-rw-rw-r-- 1 austinlucasss austinlucasss  122 Feb 18 18:42 CommandPrompt.h
+-rw-rw-r-- 1 austinlucasss austinlucasss    0 Feb 20 01:53 empty.txt
+drwxrwxr-x 2 austinlucasss austinlucasss 4.0K Feb 20 01:42 folder1
+-rwxrwxr-x 1 austinlucasss austinlucasss  17K Feb 20 01:41 Main
+-rwxrwxr-x 1 austinlucasss austinlucasss 6.2K Feb 20 01:52 Main.c
+-rw-rw-r-- 1 austinlucasss austinlucasss    0 Feb 18 18:30 Parsing.c
+-rw-rw-r-- 1 austinlucasss austinlucasss  161 Feb 17 18:05 README.md
+drwxrwxr-x 2 austinlucasss austinlucasss 4.0K Feb 17 03:50 TechShellGithub
